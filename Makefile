@@ -1,17 +1,22 @@
 warnings = -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable \
 		   -Wduplicated-cond -Wdouble-promotion -Wnull-dereference -Wformat=2 \
 		   -Wdisabled-optimization -Wsuggest-override -Wlogical-op
-flags = -ggdb3 -Og -std=c++0x -fno-rtti
+flags = -ggdb3 -Og -std=c++0x -fno-rtti -I./3rdparty
 libraries = -lSDL2 -lGLEW -lGL
 CXX = g++
 BIN = poqer
+SOURCES = $(shell find . -type f -name '*.cc' -o -name '*.cpp')
 
-OBJS = $(patsubst src/%.cc,.objs/%.o, $(shell find src/ -type f -name '*.cc'))
+OBJS = $(SOURCES:./%=.objs/%.o)
 DEPS = $(OBJS:.o=.d)
 CXXFLAGS = $(warnings) $(flags)
 LDFLAGS = $(libraries)
 
 $(shell mkdir -p .objs >/dev/null)
+$(shell mkdir -p .objs/src >/dev/null)
+$(shell mkdir -p .objs/src/gfx >/dev/null)
+$(shell mkdir -p .objs/3rdparty >/dev/null)
+$(shell mkdir -p .objs/3rdparty/imgui >/dev/null)
 
 all: $(BIN)
 	./$(BIN)
@@ -20,7 +25,7 @@ $(BIN): $(OBJS)
 	@echo "Linking to $@"
 	@$(CXX) -o $@ $^ $(LDFLAGS)
 
-.objs/%.o: src/%.cc
+.objs/%.o: ./%
 	@echo "Compiling $<"
 	@$(CXX) -MMD -MP -c -o $@ $< $(CXXFLAGS)
 

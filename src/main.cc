@@ -1,14 +1,21 @@
 #include "gfx/driver.hh"
-#include <imgui/imgui.h>
+#include "gfx/driver.hh"
 #include "gfx/ogl.hh"
-#include "gfx/utils.hh"
-#include <memory>
+#include "card.hh"
+#include "utils.hh"
 #include <GL/glew.h>
+#include "imgui/imgui.h"
+#include <memory>
 
 static bool show_test_window = false;
 
 static void load() {
-  glClearColor(0.07f, 0.07f, 0.07f, 0.07f);
+  glClearColor(187 / 255.f, 206 / 255.f, 242 / 255.f, 1.f);
+
+  deck_t deck = generate_deck(1);
+  printf("deck.size()=%d\n", deck.size());
+  for (card_t c : deck)
+    c.print();
 }
 
 static void key_event(char key, bool down) {

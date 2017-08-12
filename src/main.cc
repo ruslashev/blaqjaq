@@ -1,21 +1,24 @@
 #include "gfx/driver.hh"
 #include "gfx/driver.hh"
+#include "gfx/card_drawer.hh"
 #include "gfx/ogl.hh"
 #include "card.hh"
 #include "utils.hh"
 #include <GL/glew.h>
+#include <glm/gtc/matrix_transform.hpp>
 #include "imgui/imgui.h"
 #include <memory>
 
 static bool show_test_window = false;
+static glm::mat4 projection_mat;
+static card_drawer *c;
 
 static void load() {
   glClearColor(187 / 255.f, 206 / 255.f, 242 / 255.f, 1.f);
 
   deck_t deck = generate_deck(1);
-  printf("deck.size()=%d\n", deck.size());
-  for (card_t c : deck)
-    c.print();
+
+  c = new card_drawer;
 }
 
 static void key_event(char key, bool down) {
@@ -33,29 +36,23 @@ static void update(double dt, double t) {
 static void frame() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  if (ImGui::BeginMainMenuBar()) {
-    {
-      if (ImGui::SmallButton("Show test window"))
-        show_test_window = !show_test_window;
-    }
+  if (0 && ImGui::BeginMainMenuBar()) {
+    if (ImGui::SmallButton("Show test window"))
+      show_test_window = !show_test_window;
     ImGui::EndMainMenuBar();
   }
-
   if (show_test_window) {
     ImGui::SetNextWindowPos(ImVec2(20, 20), ImGuiSetCond_FirstUseEver);
     ImGui::ShowTestWindow(&show_test_window);
   }
 
-  // float screen_aspect_ratio = (float)ImGui::GetIO().DisplaySize.x
-  //   / (float)ImGui::GetIO().DisplaySize.y;
-  // glm::mat4 projection = glm::perspective((float)glm::radians(fov)
-  //     , screen_aspect_ratio, 0.1f, 300.f), view = cam->compute_view_mat()
-  //   , model = glm::rotate(glm::rotate(glm::mat4(), glm::radians(dragging_y)
-  //         , glm::vec3(1, 0, 0)), glm::radians(dragging_x), glm::vec3(0, 1, 0))
-  //   , mvp = projection * view * model;
+  projection_mat = glm::ortho(0.f, (float)ImGui::GetIO().DisplaySize.x
+      , (float)ImGui::GetIO().DisplaySize.y, 0.f, -1.f, 1.f);
+  c->draw(400, 200, projection_mat);
 }
 
 static void cleanup() {
+  delete c;
 }
 
 int main() {

@@ -12,6 +12,7 @@
 static bool show_test_window = false;
 static glm::mat4 projection_mat;
 static card_drawer *c;
+static bool wireframe = false;
 
 static void load() {
   glClearColor(187 / 255.f, 206 / 255.f, 242 / 255.f, 1.f);
@@ -22,6 +23,8 @@ static void load() {
 }
 
 static void key_event(char key, bool down) {
+  if (key == 'f' && down)
+    wireframe = !wireframe;
 }
 
 static void mouse_motion_event(float xrel, float yrel, int x, int y) {
@@ -35,6 +38,11 @@ static void update(double dt, double t) {
 
 static void frame() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  if (wireframe)
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+  else
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
   if (0 && ImGui::BeginMainMenuBar()) {
     if (ImGui::SmallButton("Show test window"))

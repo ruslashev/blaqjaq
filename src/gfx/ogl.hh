@@ -1,6 +1,6 @@
 #pragma once
 
-#include "utils.hh"
+#include "../utils.hh"
 #include <GL/glew.h>
 #include <vector>
 #include <string>

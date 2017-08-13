@@ -58,35 +58,35 @@ static void frame() {
   projection_mat = glm::ortho(0.f, (float)ImGui::GetIO().DisplaySize.x
       , (float)ImGui::GetIO().DisplaySize.y, 0.f, -1.f, 1.f);
 
-  float xoff = 50, yoff = 70;
-  float x = 10, y = 10;
+  float start_off = 10, xoff = 120, yoff = 160;
+  float x = start_off, y = start_off;
   for (const card_t &card : deck)
     if (card.suit == suit_t::hearts) {
       c->draw(card, x, y, projection_mat);
       x += xoff;
     }
-  x = 10;
+  x = start_off;
   y += yoff;
   for (const card_t &card : deck)
     if (card.suit == suit_t::clubs) {
       c->draw(card, x, y, projection_mat);
       x += xoff;
     }
-  x = 10;
+  x = start_off;
   y += yoff;
   for (const card_t &card : deck)
     if (card.suit == suit_t::spades) {
       c->draw(card, x, y, projection_mat);
       x += xoff;
     }
-  x = 10;
+  x = start_off;
   y += yoff;
   for (const card_t &card : deck)
     if (card.suit == suit_t::diamonds) {
       c->draw(card, x, y, projection_mat);
       x += xoff;
     }
-  x = 10;
+  x = start_off;
   y += yoff;
   for (int i = 0; i < 13; ++i) {
     c->draw_down(x, y, projection_mat);

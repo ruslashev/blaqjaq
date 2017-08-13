@@ -36,5 +36,11 @@ static const char *colored_mesh_frag = _glsl(
   }
 );
 
+static const char *black_frag = _glsl(
+  void main() {
+    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+  }
+);
+
 };
 

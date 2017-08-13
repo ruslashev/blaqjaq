@@ -82,7 +82,7 @@ void card_model::draw(bool down, const glm::mat4 &recv_mvp) {
 
   glUniformMatrix4fv(_mvp_mat_unif, 1, GL_FALSE, glm::value_ptr(mvp));
   if (down)
-    glUniform3f(_vertex_color_unif, 194 / 255.f, 154 / 255.f, 160 / 255.f);
+    glUniform3f(_vertex_color_unif, 214 / 255.f, 111 / 255.f, 169 / 255.f);
   else
     glUniform3f(_vertex_color_unif, 0.98f, 0.98f, 0.98f);
   glDrawElements(GL_TRIANGLES, _num_elements, GL_UNSIGNED_SHORT, 0);
@@ -159,10 +159,11 @@ void symbol_model::draw(const glm::mat4 &recv_mvp, float scale, bool red) {
   _vao.unbind();
 }
 
-card_drawer::card_drawer() {
-  _scale = 20.f;
-  _card = new card_model(_scale, 15, 0.62f);
-  _symbols_scale = _scale * 3.3f;
+card_drawer::card_drawer(float scale, int tesselation, float rounding
+    , float symbols_scale_mult) {
+  _scale = scale;
+  _card = new card_model(_scale, tesselation, rounding);
+  _symbols_scale = _scale * symbols_scale_mult;
   const float ss = _symbols_scale; // alias
   _ranks[rank_t::ace]   = new symbol_model("res/ace.obj",   ss * 0.05f, ss * 0.41f);
   _ranks[rank_t::two]   = new symbol_model("res/two.obj",   ss * 0.07f, ss * 0.42f);

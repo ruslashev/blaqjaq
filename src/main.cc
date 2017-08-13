@@ -20,7 +20,7 @@ static void load() {
 
   deck = generate_deck(1);
 
-  c = new card_drawer;
+  c = new card_drawer(10.f, 15, 0.62f, 3.3f);
 }
 
 static void key_event(char key, bool down) {

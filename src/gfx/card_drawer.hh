@@ -40,7 +40,8 @@ class card_drawer {
   // std::map<rank_t, float> _suit_xoffset_for_rank;
   float _scale, _symbols_scale;
 public:
-  card_drawer();
+  card_drawer(float scale, int tesselation, float rounding
+      , float symbols_scale_mult);
   void draw(const card_t &card, float x, float y, const glm::mat4 &projection);
   void draw_down(float x, float y, const glm::mat4 &projection);
 };

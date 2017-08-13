@@ -86,6 +86,12 @@ static void frame() {
       c->draw(card, x, y, projection_mat);
       x += xoff;
     }
+  x = 10;
+  y += yoff;
+  for (int i = 0; i < 13; ++i) {
+    c->draw_down(x, y, projection_mat);
+    x += xoff;
+  }
 }
 
 static void cleanup() {

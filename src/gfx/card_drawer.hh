@@ -4,6 +4,21 @@
 #include "../card.hh"
 #include <map>
 
+class card_model {
+  shader_program _sp;
+  vertex_array_object _vao;
+  array_buffer _vbo;
+  element_array_buffer _ebo;
+  GLint _vertex_pos_attr, _mvp_mat_unif, _vertex_color_unif;
+  int _num_elements;
+
+  void _add_circle(std::vector<float> *vertices, std::vector<GLushort> *elements
+      , float x, float y, float rounding, int tesselation);
+public:
+  card_model();
+  void draw(bool down, const glm::mat4 &recv_mvp);
+};
+
 class symbol_model {
   shader_program _sp;
   vertex_array_object _vao;
@@ -15,21 +30,6 @@ class symbol_model {
 public:
   symbol_model(const char *filename, float n_scale, float n_xoff, float n_yoff);
   void draw(const glm::mat4 &recv_mvp, bool red, float xoff = 0.f);
-};
-
-class card_model {
-  shader_program _sp;
-  vertex_array_object _vao;
-  array_buffer _vbo;
-  element_array_buffer _ebo;
-  GLint _vertex_pos_attr, _mvp_mat_unif;
-  int _num_elements;
-
-  void _add_circle(std::vector<float> *vertices, std::vector<GLushort> *elements
-      , float x, float y, float rounding, int tesselation);
-public:
-  card_model();
-  void draw(const glm::mat4 &recv_mvp);
 };
 
 class card_drawer {

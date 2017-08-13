@@ -26,9 +26,10 @@ void card_model::_add_circle(std::vector<float> *vertices
 }
 
 card_model::card_model()
-  : _sp(shaders::simple_vert, shaders::simple_frag)
+  : _sp(shaders::simple_vert, shaders::unif_colored_mesh_frag)
   , _vertex_pos_attr(_sp.bind_attrib("vertex_pos"))
-  , _mvp_mat_unif(_sp.bind_uniform("mvp")) {
+  , _mvp_mat_unif(_sp.bind_uniform("mvp"))
+  , _vertex_color_unif(_sp.bind_uniform("vertex_color_unif")) {
   _vao.bind();
   _vbo.bind();
   _ebo.bind();
@@ -72,7 +73,7 @@ card_model::card_model()
   glDisableVertexAttribArray(_vertex_pos_attr);
 }
 
-void card_model::draw(const glm::mat4 &recv_mvp) {
+void card_model::draw(bool down, const glm::mat4 &recv_mvp) {
   _vao.bind();
   _sp.use_this_prog();
 
@@ -81,6 +82,10 @@ void card_model::draw(const glm::mat4 &recv_mvp) {
     , mvp = recv_mvp * model;
 
   glUniformMatrix4fv(_mvp_mat_unif, 1, GL_FALSE, glm::value_ptr(mvp));
+  if (down)
+    glUniform3f(_vertex_color_unif, 154 / 255.f, 194 / 255.f, 160 / 255.f);
+  else
+    glUniform3f(_vertex_color_unif, 1, 1, 1);
   glDrawElements(GL_TRIANGLES, _num_elements, GL_UNSIGNED_SHORT, 0);
   _vao.unbind();
 }
@@ -197,7 +202,7 @@ void card_drawer::draw(const card_t &card, float x, float y
     , const glm::mat4 &projection) {
   glm::mat4 translate = glm::translate(glm::mat4(), glm::vec3(x, y, 0.f))
     , mvp = projection * translate;
-  _card->draw(mvp);
+  _card->draw(false, mvp);
   bool red = card.suit == suit_t::hearts || card.suit == suit_t::diamonds;
   _ranks[card.rank]->draw(mvp, red);
   _suits[card.suit]->draw(mvp, red, _suit_xoffset_for_rank[card.rank]);
@@ -206,6 +211,6 @@ void card_drawer::draw(const card_t &card, float x, float y
 void card_drawer::draw_down(float x, float y, const glm::mat4 &projection) {
   glm::mat4 translate = glm::translate(glm::mat4(), glm::vec3(x, y, 0.f))
     , mvp = projection * translate;
-  _card->draw(mvp);
+  _card->draw(true, mvp);
 }
 

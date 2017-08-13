@@ -38,7 +38,7 @@ class card_drawer {
   std::map<rank_t, symbol_model*> _ranks;
   std::map<suit_t, symbol_model*> _suits;
   // std::map<rank_t, float> _suit_xoffset_for_rank;
-  float _symbols_scale;
+  float _scale, _symbols_scale;
 public:
   card_drawer();
   void draw(const card_t &card, float x, float y, const glm::mat4 &projection);

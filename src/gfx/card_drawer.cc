@@ -160,9 +160,9 @@ void symbol_model::draw(const glm::mat4 &recv_mvp, float scale, bool red) {
 }
 
 card_drawer::card_drawer() {
-  float scale = 20.f;
-  _card = new card_model(scale, 15, 0.62f);
-  _symbols_scale = scale * 3.6f;
+  _scale = 20.f;
+  _card = new card_model(_scale, 15, 0.62f);
+  _symbols_scale = _scale * 3.3f;
   const float ss = _symbols_scale; // alias
   _ranks[rank_t::ace]   = new symbol_model("res/ace.obj",   ss * 0.05f, ss * 0.41f);
   _ranks[rank_t::two]   = new symbol_model("res/two.obj",   ss * 0.07f, ss * 0.42f);
@@ -186,11 +186,17 @@ card_drawer::card_drawer() {
 void card_drawer::draw(const card_t &card, float x, float y
     , const glm::mat4 &projection) {
   glm::mat4 translate = glm::translate(glm::mat4(), glm::vec3(x, y, 0.f))
-    , mvp = projection * translate;
+    , mvp = projection * translate
+    , flip_mvp = projection * translate
+      * glm::rotate(glm::mat4(), (float)M_PI, glm::vec3(0, 0, 1))
+      * glm::translate(glm::mat4(), glm::vec3(-5.f * _scale, -7.f * _scale, 0));
+
   _card->draw(false, mvp);
   bool red = card.suit == suit_t::hearts || card.suit == suit_t::diamonds;
   _ranks[card.rank]->draw(mvp, _symbols_scale, red);
   _suits[card.suit]->draw(mvp, _symbols_scale, red);
+  _ranks[card.rank]->draw(flip_mvp, _symbols_scale, red);
+  _suits[card.suit]->draw(flip_mvp, _symbols_scale, red);
 }
 
 void card_drawer::draw_down(float x, float y, const glm::mat4 &projection) {

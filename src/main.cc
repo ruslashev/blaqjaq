@@ -13,11 +13,12 @@ static bool show_test_window = false;
 static glm::mat4 projection_mat;
 static card_drawer *c;
 static bool wireframe = false;
+static deck_t deck;
 
 static void load() {
   glClearColor(187 / 255.f, 206 / 255.f, 242 / 255.f, 1.f);
 
-  deck_t deck = generate_deck(1);
+  deck = generate_deck(1);
 
   c = new card_drawer;
 }
@@ -56,7 +57,35 @@ static void frame() {
 
   projection_mat = glm::ortho(0.f, (float)ImGui::GetIO().DisplaySize.x
       , (float)ImGui::GetIO().DisplaySize.y, 0.f, -1.f, 1.f);
-  c->draw(400, 200, projection_mat);
+
+  float xoff = 50, yoff = 70;
+  float x = 10, y = 10;
+  for (const card_t &card : deck)
+    if (card.suit == suit_t::hearts) {
+      c->draw(card, x, y, projection_mat);
+      x += xoff;
+    }
+  x = 10;
+  y += yoff;
+  for (const card_t &card : deck)
+    if (card.suit == suit_t::clubs) {
+      c->draw(card, x, y, projection_mat);
+      x += xoff;
+    }
+  x = 10;
+  y += yoff;
+  for (const card_t &card : deck)
+    if (card.suit == suit_t::spades) {
+      c->draw(card, x, y, projection_mat);
+      x += xoff;
+    }
+  x = 10;
+  y += yoff;
+  for (const card_t &card : deck)
+    if (card.suit == suit_t::diamonds) {
+      c->draw(card, x, y, projection_mat);
+      x += xoff;
+    }
 }
 
 static void cleanup() {

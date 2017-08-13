@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ogl.hh"
+#include "../card.hh"
 #include <map>
 
 class symbol_model {
@@ -8,11 +9,12 @@ class symbol_model {
   vertex_array_object _vao;
   array_buffer _vbo;
   element_array_buffer _ebo;
-  GLint _vertex_pos_attr, _mvp_mat_unif;
+  GLint _vertex_pos_attr, _mvp_mat_unif, _vertex_color_unif;
   int _num_elements;
+  float _scale, _xoff, _yoff;
 public:
-  symbol_model(const char *filename);
-  void draw(const glm::mat4 &card_mvp);
+  symbol_model(const char *filename, float n_scale, float n_xoff, float n_yoff);
+  void draw(const glm::mat4 &recv_mvp, bool red, float xoff = 0.f);
 };
 
 class card_model {
@@ -27,6 +29,17 @@ class card_model {
       , float x, float y, float rounding, int tesselation);
 public:
   card_model();
-  void draw(float x, float y, const glm::mat4 &projection);
+  void draw(const glm::mat4 &recv_mvp);
+};
+
+class card_drawer {
+  card_model *_card;
+  std::map<suit_t, symbol_model*> _suits;
+  std::map<rank_t, symbol_model*> _ranks;
+  std::map<rank_t, float> _suit_xoffset_for_rank;
+public:
+  card_drawer();
+  void draw(const card_t &card, float x, float y, const glm::mat4 &projection);
+  void draw_down(float x, float y, const glm::mat4 &projection);
 };
 

@@ -14,6 +14,7 @@ void driver_init(const char *title, int width, int height) {
       , "failed to init sdl: %s", SDL_GetError());
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+  SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 16);
   window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED
       , SDL_WINDOWPOS_CENTERED, width, height
       , SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);

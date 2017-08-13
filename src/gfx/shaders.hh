@@ -42,5 +42,12 @@ static const char *black_frag = _glsl(
   }
 );
 
+static const char *unif_colored_mesh_frag = _glsl(
+  uniform vec3 vertex_color_unif;
+  void main() {
+    gl_FragColor = vec4(vertex_color_unif, 1.0);
+  }
+);
+
 };
 

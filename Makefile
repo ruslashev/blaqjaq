@@ -4,7 +4,7 @@ warnings = -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable \
 flags = -ggdb3 -Og -std=c++0x -fno-rtti -I./3rdparty
 libraries = -lSDL2 -lGLEW -lGL
 CXX = g++
-BIN = poqer
+BIN = blaqjaq
 SOURCES = $(shell find . -type f -name '*.cc' -o -name '*.cpp')
 
 OBJS = $(SOURCES:./%=.objs/%.o)

@@ -10,8 +10,7 @@ enum suit_t {
 };
 
 enum rank_t {
-    ace
-  , two
+    two
   , three
   , four
   , five
@@ -23,6 +22,7 @@ enum rank_t {
   , jack
   , queen
   , king
+  , ace
 };
 
 void print_suit(suit_t suit);
@@ -40,6 +40,5 @@ public:
 typedef std::vector<card_t> deck_t;
 
 deck_t generate_deck(int packs);
-
 void shuffle_deck(deck_t *deck);
 

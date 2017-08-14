@@ -1,5 +1,7 @@
 #include "card.hh"
 #include <cstdio>
+#include <cassert>
+#include <cmath>
 
 void print_suit(suit_t suit) {
   switch (suit) {
@@ -41,9 +43,20 @@ void card_t::print() {
 
 deck_t generate_deck(int packs) {
   deck_t deck;
-  for (int suit = suit_t::hearts; suit <= suit_t::hearts + 3; ++suit)
-    for (int rank = rank_t::ace; rank <= rank_t::ace + 12; ++rank)
-      deck.emplace_back((suit_t)suit, (rank_t)rank);
+  assert(packs >= 0);
+  for (int i = 0; i < packs; ++i)
+    for (int suit = suit_t::hearts; suit <= suit_t::hearts + 3; ++suit)
+      for (int rank = rank_t::two; rank <= rank_t::two + 12; ++rank)
+        deck.emplace_back((suit_t)suit, (rank_t)rank);
   return deck;
+}
+
+static int rand_in_range(int min, int max) {
+  return min + rand() % (max - min + 1);
+}
+
+void shuffle_deck(deck_t *deck) {
+  for (size_t i = 0; i < deck->size(); ++i)
+    std::swap((*deck)[i], (*deck)[rand_in_range(0, deck->size() - 1)]);
 }
 

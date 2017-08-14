@@ -11,16 +11,19 @@
 
 static bool show_test_window = false;
 static glm::mat4 projection_mat;
-static card_drawer *c;
+static card_drawer *big_cd, *small_cd;
 static bool wireframe = false;
-static deck_t deck;
+static deck_t deck, shuffled_deck;
 
 static void load() {
   glClearColor(187 / 255.f, 206 / 255.f, 242 / 255.f, 1.f);
 
   deck = generate_deck(1);
+  shuffled_deck = generate_deck(1);
+  shuffle_deck(&shuffled_deck);
 
-  c = new card_drawer(10.f, 15, 0.62f, 3.3f);
+  big_cd = new card_drawer(20.f, 15, 0.62f, 3.3f);
+  small_cd = new card_drawer(10.f, 15, 0.62f, 3.3f);
 }
 
 static void key_event(char key, bool down) {
@@ -58,12 +61,48 @@ static void frame() {
   projection_mat = glm::ortho(0.f, (float)ImGui::GetIO().DisplaySize.x
       , (float)ImGui::GetIO().DisplaySize.y, 0.f, -1.f, 1.f);
 
-  for (size_t i = 0; i < deck.size(); ++i)
-    c->draw(deck[i], 10 + i * 12, 10, projection_mat);
+  for (size_t i = 0; i < shuffled_deck.size(); ++i)
+    small_cd->draw(shuffled_deck[i], 10 + i * 14, 10, projection_mat);
+
+  float xstart = 10, ystart = 90, xoff = 110, yoff = 150;
+  float x = xstart, y = ystart;
+  for (const card_t &card : deck)
+    if (card.suit == suit_t::hearts) {
+      big_cd->draw(card, x, y, projection_mat);
+      x += xoff;
+    }
+  x = xstart;
+  y += yoff;
+  for (const card_t &card : deck)
+    if (card.suit == suit_t::clubs) {
+      big_cd->draw(card, x, y, projection_mat);
+      x += xoff;
+    }
+  x = xstart;
+  y += yoff;
+  for (const card_t &card : deck)
+    if (card.suit == suit_t::spades) {
+      big_cd->draw(card, x, y, projection_mat);
+      x += xoff;
+    }
+  x = xstart;
+  y += yoff;
+  for (const card_t &card : deck)
+    if (card.suit == suit_t::diamonds) {
+      big_cd->draw(card, x, y, projection_mat);
+      x += xoff;
+    }
+  x = xstart;
+  y += yoff;
+  for (int i = 0; i < 13; ++i) {
+    big_cd->draw_down(x, y, projection_mat);
+    x += xoff;
+  }
 }
 
 static void cleanup() {
-  delete c;
+  delete big_cd;
+  delete small_cd;
 }
 
 int main() {

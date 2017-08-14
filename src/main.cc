@@ -20,7 +20,7 @@ static void load() {
 
   deck = generate_deck(1);
 
-  c = new card_drawer(20.f, 15, 0.62f, 3.3f);
+  c = new card_drawer(10.f, 15, 0.62f, 3.3f);
 }
 
 static void key_event(char key, bool down) {
@@ -58,40 +58,8 @@ static void frame() {
   projection_mat = glm::ortho(0.f, (float)ImGui::GetIO().DisplaySize.x
       , (float)ImGui::GetIO().DisplaySize.y, 0.f, -1.f, 1.f);
 
-  float start_off = 10, xoff = 120, yoff = 160;
-  float x = start_off, y = start_off;
-  for (const card_t &card : deck)
-    if (card.suit == suit_t::hearts) {
-      c->draw(card, x, y, projection_mat);
-      x += xoff;
-    }
-  x = start_off;
-  y += yoff;
-  for (const card_t &card : deck)
-    if (card.suit == suit_t::clubs) {
-      c->draw(card, x, y, projection_mat);
-      x += xoff;
-    }
-  x = start_off;
-  y += yoff;
-  for (const card_t &card : deck)
-    if (card.suit == suit_t::spades) {
-      c->draw(card, x, y, projection_mat);
-      x += xoff;
-    }
-  x = start_off;
-  y += yoff;
-  for (const card_t &card : deck)
-    if (card.suit == suit_t::diamonds) {
-      c->draw(card, x, y, projection_mat);
-      x += xoff;
-    }
-  x = start_off;
-  y += yoff;
-  for (int i = 0; i < 13; ++i) {
-    c->draw_down(x, y, projection_mat);
-    x += xoff;
-  }
+  for (size_t i = 0; i < deck.size(); ++i)
+    c->draw(deck[i], 10 + i * 12, 10, projection_mat);
 }
 
 static void cleanup() {

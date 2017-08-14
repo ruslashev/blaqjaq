@@ -175,7 +175,7 @@ card_drawer::card_drawer(float scale, int tesselation, float rounding
   _ranks[rank_t::eight] = new symbol_model("res/eight.obj", ss * 0.05f, ss * 0.42f);
   _ranks[rank_t::nine]  = new symbol_model("res/nine.obj",  ss * 0.06f, ss * 0.42f);
   _ranks[rank_t::ten]   = new symbol_model("res/ten.obj",   ss * 0.05f, ss * 0.42f);
-  _ranks[rank_t::jack]  = new symbol_model("res/jack.obj",  ss * 0.07f, ss * 0.43f);
+  _ranks[rank_t::jack]  = new symbol_model("res/jack.obj",  ss * 0.12f, ss * 0.43f);
   _ranks[rank_t::queen] = new symbol_model("res/queen.obj", ss * 0.05f, ss * 0.48f);
   _ranks[rank_t::king]  = new symbol_model("res/king.obj",  ss * 0.07f, ss * 0.43f);
   _suits[suit_t::hearts]   = new symbol_model("res/heart.obj",   ss * 0.05f, ss * 0.83f);

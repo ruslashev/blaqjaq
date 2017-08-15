@@ -2,13 +2,13 @@
 #include "imgui/imgui.h"
 #include "imgui.hh"
 
-static float  g_Time = 0.0f;
-static bool   g_MousePressed[3] = { false, false, false };
-static float  g_MouseWheel = 0.0f;
+static float g_Time = 0.0f;
+static bool g_MousePressed[3] = { false, false, false };
+static float g_MouseWheel = 0.0f;
 static GLuint g_FontTexture = 0;
-static int    g_ShaderHandle = 0, g_VertHandle = 0, g_FragHandle = 0;
-static int    g_AttribLocationTex = 0, g_AttribLocationProjMtx = 0;
-static int    g_AttribLocationPosition = 0, g_AttribLocationUV = 0
+static int g_ShaderHandle = 0, g_VertHandle = 0, g_FragHandle = 0
+    , g_UniformLocationTex = 0, g_UniformLocationProjMtx = 0
+    , g_AttribLocationPosition = 0, g_AttribLocationUV = 0
     , g_AttribLocationColor = 0;
 static unsigned int g_VboHandle = 0, g_VaoHandle = 0, g_ElementsHandle = 0;
 
@@ -61,8 +61,8 @@ static void imgui_render_draw_lists(ImDrawData* draw_data) {
     {-1.f,                    1.f,                     0.f, 1.f },
   };
   glUseProgram(g_ShaderHandle);
-  glUniform1i(g_AttribLocationTex, 0);
-  glUniformMatrix4fv(g_AttribLocationProjMtx, 1, GL_FALSE
+  glUniform1i(g_UniformLocationTex, 0);
+  glUniformMatrix4fv(g_UniformLocationProjMtx, 1, GL_FALSE
       , &ortho_projection[0][0]);
   glBindVertexArray(g_VaoHandle);
 
@@ -72,11 +72,11 @@ static void imgui_render_draw_lists(ImDrawData* draw_data) {
     glBindBuffer(GL_ARRAY_BUFFER, g_VboHandle);
     glBufferData(GL_ARRAY_BUFFER
         , (GLsizeiptr)(cmd_list->VtxBuffer.Size * sizeof(ImDrawVert))
-        , (const GLvoid*)cmd_list->VtxBuffer.Data, GL_STREAM_DRAW);
+        , (const void*)cmd_list->VtxBuffer.Data, GL_STREAM_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_ElementsHandle);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER
         , (GLsizeiptr)(cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx))
-        , (const GLvoid*)cmd_list->IdxBuffer.Data, GL_STREAM_DRAW);
+        , (const void*)cmd_list->IdxBuffer.Data, GL_STREAM_DRAW);
     for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++) {
       const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
       if (pcmd->UserCallback)
@@ -134,29 +134,26 @@ static void imgui_set_display_size(SDL_Window *window) {
 }
 
 static bool imgui_create_ogl_state() {
-  const GLchar *vertex_shader =
-    "#version 330\n"
-    "uniform mat4 ProjMtx;\n"
-    "in vec2 Position;\n"
-    "in vec2 UV;\n"
-    "in vec4 Color;\n"
-    "out vec2 Frag_UV;\n"
-    "out vec4 Frag_Color;\n"
-    "void main()\n"
-    "{\n"
-    "	Frag_UV = UV;\n"
-    "	Frag_Color = Color;\n"
-    "	gl_Position = ProjMtx * vec4(Position.xy,0,1);\n"
+  const char *vertex_shader =
+    "#version 120\n"
+    "uniform mat4 projection;\n"
+    "attribute vec2 position;\n"
+    "attribute vec2 uv;\n"
+    "attribute vec4 color;\n"
+    "varying vec2 uv_f;\n"
+    "varying vec4 color_f;\n"
+    "void main() {\n"
+    "  uv_f = uv;\n"
+    "  color_f = color;\n"
+    "  gl_Position = projection * vec4(position, 0.0, 1.0);\n"
     "}\n";
-  const GLchar* fragment_shader =
-    "#version 330\n"
-    "uniform sampler2D Texture;\n"
-    "in vec2 Frag_UV;\n"
-    "in vec4 Frag_Color;\n"
-    "out vec4 Out_Color;\n"
-    "void main()\n"
-    "{\n"
-    "	Out_Color = Frag_Color * texture( Texture, Frag_UV.st);\n"
+  const char *fragment_shader =
+    "#version 120\n"
+    "uniform sampler2D texture;\n"
+    "varying vec2 uv_f;\n"
+    "varying vec4 color_f;\n"
+    "void main() {\n"
+    "  gl_FragColor = color_f * texture2D(texture, uv_f);\n"
     "}\n";
   g_ShaderHandle = glCreateProgram();
   g_VertHandle = glCreateShader(GL_VERTEX_SHADER);
@@ -169,11 +166,11 @@ static bool imgui_create_ogl_state() {
   glAttachShader(g_ShaderHandle, g_FragHandle);
   glLinkProgram(g_ShaderHandle);
 
-  g_AttribLocationTex = glGetUniformLocation(g_ShaderHandle, "Texture");
-  g_AttribLocationProjMtx = glGetUniformLocation(g_ShaderHandle, "ProjMtx");
-  g_AttribLocationPosition = glGetAttribLocation(g_ShaderHandle, "Position");
-  g_AttribLocationUV = glGetAttribLocation(g_ShaderHandle, "UV");
-  g_AttribLocationColor = glGetAttribLocation(g_ShaderHandle, "Color");
+  g_UniformLocationTex = glGetUniformLocation(g_ShaderHandle, "texture");
+  g_UniformLocationProjMtx = glGetUniformLocation(g_ShaderHandle, "projection");
+  g_AttribLocationPosition = glGetAttribLocation(g_ShaderHandle, "position");
+  g_AttribLocationUV = glGetAttribLocation(g_ShaderHandle, "uv");
+  g_AttribLocationColor = glGetAttribLocation(g_ShaderHandle, "color");
 
   glGenBuffers(1, &g_VboHandle);
   glGenBuffers(1, &g_ElementsHandle);
@@ -186,11 +183,11 @@ static bool imgui_create_ogl_state() {
   glEnableVertexAttribArray(g_AttribLocationColor);
 
   glVertexAttribPointer(g_AttribLocationPosition, 2, GL_FLOAT, GL_FALSE
-      , sizeof(ImDrawVert), (GLvoid*)offsetof(ImDrawVert, pos));
+      , sizeof(ImDrawVert), (void*)offsetof(ImDrawVert, pos));
   glVertexAttribPointer(g_AttribLocationUV, 2, GL_FLOAT, GL_FALSE
-      , sizeof(ImDrawVert), (GLvoid*)offsetof(ImDrawVert, uv));
+      , sizeof(ImDrawVert), (void*)offsetof(ImDrawVert, uv));
   glVertexAttribPointer(g_AttribLocationColor, 4, GL_UNSIGNED_BYTE, GL_TRUE
-      , sizeof(ImDrawVert), (GLvoid*)offsetof(ImDrawVert, col));
+      , sizeof(ImDrawVert), (void*)offsetof(ImDrawVert, col));
 
   ImGuiIO& io = ImGui::GetIO();
   unsigned char *pixels;
@@ -203,7 +200,7 @@ static bool imgui_create_ogl_state() {
   glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA
       , GL_UNSIGNED_BYTE, pixels);
-  io.Fonts->TexID = (void *)(intptr_t)g_FontTexture;
+  io.Fonts->TexID = (void*)(intptr_t)g_FontTexture;
 
   return true;
 }

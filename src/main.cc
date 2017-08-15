@@ -15,7 +15,7 @@ static card_drawer *c;
 
 static deck_t deck;
 static bool match_in_progress = false;
-static int money = 1000;
+static int money = 1000, bet = 0;
 
 static void load() {
   glClearColor(187 / 255.f, 206 / 255.f, 242 / 255.f, 1.f);
@@ -23,19 +23,6 @@ static void load() {
   deck = generate_deck(1);
 
   c = new card_drawer(20.f, 15, 0.62f, 3.3f);
-
-  deck_t test;
-  test.emplace_back(two, spades);
-  test.emplace_back(three, spades);
-  test.emplace_back(four, spades);
-  test.emplace_back(ace, spades);
-  test.emplace_back(two, spades);
-  test.emplace_back(jack, spades);
-  test.emplace_back(ace, spades);
-  std::vector<int> scores = count_scores(test);
-  for (int s : scores)
-    printf("%d ", s);
-  puts("");
 }
 
 static void key_event(char key, bool down) {
@@ -48,13 +35,14 @@ static void update(double dt, double t) {
 }
 
 static void new_game() {
-  money = 0;
+  money = bet = 0;
   ImGui::OpenPopup("Enter starting balance");
   match_in_progress = true;
 }
 
 static void gui_ask_starting_balance_popup() {
-  if (ImGui::BeginPopupModal("Enter starting balance", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+  if (ImGui::BeginPopupModal("Enter starting balance", NULL
+        , ImGuiWindowFlags_AlwaysAutoResize)) {
     ImGui::InputInt("", &money);
     if (ImGui::Button("OK", ImVec2(100, 0)))
       ImGui::CloseCurrentPopup();
@@ -83,6 +71,20 @@ static void draw_gui() {
     ImGui::SetNextWindowPos(ImVec2(20, 20), ImGuiSetCond_FirstUseEver);
     ImGui::ShowTestWindow(&show_test_window);
   }
+
+  float padding = 5;
+  ImGui::SetNextWindowPos(ImVec2(padding, 25 + padding), ImGuiCond_Always);
+  ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x - padding * 2
+        , ImGui::GetIO().DisplaySize.y - 25 - padding * 2), ImGuiCond_Always);
+  ImGui::Begin("Main game", nullptr
+      , ImGuiWindowFlags_NoTitleBar
+      | ImGuiWindowFlags_NoResize
+      | ImGuiWindowFlags_NoMove
+      | ImGuiWindowFlags_NoCollapse);
+  if (!match_in_progress)
+    ImGui::Text("No match being played right now");
+
+  ImGui::End();
 }
 
 static void frame() {

@@ -1,4 +1,5 @@
 #include "card.hh"
+#include "utils.hh"
 #include <cstdio>
 #include <cassert>
 #include <cmath>
@@ -30,6 +31,11 @@ void print_rank(rank_t rank) {
   }
 }
 
+card_t::card_t(rank_t n_rank, suit_t n_suit)
+  : suit(n_suit)
+  , rank(n_rank) {
+}
+
 card_t::card_t(suit_t n_suit, rank_t n_rank)
   : suit(n_suit)
   , rank(n_rank) {
@@ -58,5 +64,63 @@ static int rand_in_range(int min, int max) {
 void shuffle_deck(deck_t *deck) {
   for (size_t i = 0; i < deck->size(); ++i)
     std::swap((*deck)[i], (*deck)[rand_in_range(0, deck->size() - 1)]);
+}
+
+struct score_bin_tree {
+  int score;
+  score_bin_tree *left, *right;
+  score_bin_tree(int n_score) : score(n_score), left(nullptr), right(nullptr) {}
+};
+
+static void count_scores_aux(score_bin_tree *node, const deck_t &cards
+    , int index) {
+  if (index < 0 || index > (int)cards.size() - 1)
+    return;
+  card_t head = cards[index];
+  if (head.rank != rank_t::ace) {
+    switch (head.rank) {
+      case rank_t::two:   node->score += 2;  break;
+      case rank_t::three: node->score += 3;  break;
+      case rank_t::four:  node->score += 4;  break;
+      case rank_t::five:  node->score += 5;  break;
+      case rank_t::six:   node->score += 6;  break;
+      case rank_t::seven: node->score += 7;  break;
+      case rank_t::eight: node->score += 8;  break;
+      case rank_t::nine:  node->score += 9;  break;
+      case rank_t::ten:   node->score += 10; break;
+      case rank_t::jack:  node->score += 10; break;
+      case rank_t::queen: node->score += 10; break;
+      case rank_t::king:  node->score += 10; break;
+      default: die("things that shouldn't happen for 400");
+    }
+    count_scores_aux(node, cards, index + 1);
+  } else {
+    node->left = new score_bin_tree(1 + node->score);
+    count_scores_aux(node->left, cards, index + 1);
+    node->right = new score_bin_tree(11 + node->score);
+    count_scores_aux(node->right, cards, index + 1);
+  }
+}
+
+static void gather_unique_leaves(score_bin_tree *branch
+    , std::vector<int> *collection) {
+  if (branch->left)
+    gather_unique_leaves(branch->left, collection);
+  if (branch->right)
+    gather_unique_leaves(branch->right, collection);
+  if (!branch->left && !branch->right) {
+    for (int e : *collection)
+      if (e == branch->score)
+        return;
+    collection->push_back(branch->score);
+  }
+}
+
+std::vector<int> count_scores(const deck_t &deck) {
+  score_bin_tree root(0);
+  count_scores_aux(&root, deck, 0);
+  std::vector<int> scores;
+  gather_unique_leaves(&root, &scores);
+  return scores;
 }
 

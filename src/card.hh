@@ -28,11 +28,11 @@ enum rank_t {
 void print_suit(suit_t suit);
 void print_rank(rank_t rank);
 
-class card_t {
-public:
+struct card_t {
   suit_t suit;
   rank_t rank;
 
+  card_t(rank_t n_rank, suit_t n_suit);
   card_t(suit_t n_suit, rank_t n_rank);
   void print();
 };
@@ -41,4 +41,5 @@ typedef std::vector<card_t> deck_t;
 
 deck_t generate_deck(int packs);
 void shuffle_deck(deck_t *deck);
+std::vector<int> count_scores(const deck_t &deck);
 

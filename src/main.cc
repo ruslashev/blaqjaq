@@ -17,17 +17,13 @@ enum class game_state_t {
     no_game
   , ask_starting_money
   , ask_bet
+  , temp_next
 };
 static game_state_t game_state = game_state_t::no_game;
-
-static deck_t deck;
 static int money = 1000, bet = 0;
 
 static void load() {
   glClearColor(187 / 255.f, 206 / 255.f, 242 / 255.f, 1.f);
-
-  deck = generate_deck(1);
-
   c = new card_drawer(20.f, 15, 0.62f, 3.3f);
 }
 
@@ -45,6 +41,7 @@ static void gui_display_current_state() {
       ImGui::Text("ask bet");
       break;
     default:
+      ImGui::Text("unknown");
       break;
   }
 }
@@ -52,19 +49,6 @@ static void gui_display_current_state() {
 static void new_game() {
   money = bet = 0;
   game_state = game_state_t::ask_starting_money;
-}
-
-static void gui_ask_starting_balance_popup() {
-  if (ImGui::BeginPopupModal("Enter starting balance", NULL
-        , ImGuiWindowFlags_AlwaysAutoResize)) {
-    ImGui::InputInt("", &money);
-    if (ImGui::Button("OK", ImVec2(100, 0)))
-      if (money > 0) {
-        game_state = game_state_t::ask_bet;
-        ImGui::CloseCurrentPopup();
-      }
-    ImGui::EndPopup();
-  }
 }
 
 static void draw_gui() {
@@ -100,11 +84,31 @@ static void draw_gui() {
       ImGui::Text("No match being played right now");
       break;
     case game_state_t::ask_starting_money:
-      gui_ask_starting_balance_popup();
-      ImGui::OpenPopup("Enter starting balance");
+      ImGui::Text("Money:");
+      ImGui::SameLine();
+      ImGui::PushItemWidth(200);
+      ImGui::InputInt("", &money);
+      ImGui::PopItemWidth();
+      ImGui::SameLine();
+      if (ImGui::Button("OK", ImVec2(100, 0)))
+        if (money > 0)
+          game_state = game_state_t::ask_bet;
       break;
     case game_state_t::ask_bet:
       ImGui::Text("Money: %d", money);
+      ImGui::Text("Enter bet:");
+      ImGui::SameLine();
+      ImGui::PushItemWidth(200);
+      ImGui::InputInt("", &bet);
+      ImGui::PopItemWidth();
+      ImGui::SameLine();
+      if (ImGui::Button("OK", ImVec2(100, 0)))
+        if (bet > 0 && bet <= money)
+          game_state = game_state_t::temp_next;
+      break;
+    case game_state_t::temp_next:
+      ImGui::Text("Money: %d", money);
+      ImGui::Text("Bet: %d", bet);
     default:
       break;
   }

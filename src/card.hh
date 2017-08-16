@@ -44,6 +44,7 @@ void shuffle_deck(deck_t *deck);
 
 // blackjack specific
 std::vector<int> count_scores(const deck_t &deck);
+card_t random_card();
 deck_t deal_hand();
 bool scores_have_bj(const std::vector<int> &scores);
 

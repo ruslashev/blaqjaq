@@ -68,6 +68,11 @@ static void game_state_deal_cards() {
     game_state = game_state_t::the_play;
 }
 
+static void game_hit() {
+  player_hand.push_back(random_card());
+  // if (player_scores[0] > 21)
+}
+
 static void gui_display_current_state() {
   std::string state;
   switch (game_state) {
@@ -199,7 +204,8 @@ static void draw_gui() {
     case game_state_t::the_play:
       gui_draw_all_cards_and_stats();
       ImGui::Text("\n\n\n\n");
-      ImGui::Button("Hit");
+      if (ImGui::Button("Hit"))
+        game_hit();
       ImGui::SameLine();
       ImGui::Button("Stay");
       break;

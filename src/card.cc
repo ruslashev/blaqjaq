@@ -124,12 +124,15 @@ std::vector<int> count_scores(const deck_t &deck) {
   return scores;
 }
 
+card_t random_card() {
+  return card_t((suit_t)(suit_t::hearts + rand_in_range(0, 3))
+      , (rank_t)(rank_t::two + rand_in_range(0, 12)));
+}
+
 deck_t deal_hand() {
   deck_t hand;
-  hand.emplace_back((suit_t)(suit_t::hearts + rand_in_range(0, 3))
-      , (rank_t)(rank_t::two + rand_in_range(0, 12)));
-  hand.emplace_back((suit_t)(suit_t::hearts + rand_in_range(0, 3))
-      , (rank_t)(rank_t::two + rand_in_range(0, 12)));
+  hand.push_back(random_card());
+  hand.push_back(random_card());
   return hand;
 }
 

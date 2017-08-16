@@ -18,6 +18,10 @@ enum class game_state_t {
   , ask_starting_money
   , ask_bet
   , dealing_cards
+  , tie // push or standoff
+  , player_natural
+  , dealer_natural
+  , the_play
 };
 static game_state_t game_state = game_state_t::no_game;
 static int money = 1000, bet = 0;
@@ -37,25 +41,20 @@ static void gui_display_current_state() {
   style.Colors[ImGuiCol_WindowBg].w = 0;
   // style.Colors[ImGuiCol_Text] = ImVec4(0.07f, 0.07f, 0.07f, 1.f);
 
-  ImGui::Text("Game state:");
-  ImGui::SameLine();
+  std::string state;
   switch (game_state) {
-    case game_state_t::no_game:
-      ImGui::Text("no game");
-      break;
-    case game_state_t::ask_starting_money:
-      ImGui::Text("ask starting money");
-      break;
-    case game_state_t::ask_bet:
-      ImGui::Text("ask bet");
-      break;
-    case game_state_t::dealing_cards:
-      ImGui::Text("dealing cards");
-      break;
-    default:
-      ImGui::Text("unknown");
-      break;
+    case game_state_t::no_game:            state = "no game"; break;
+    case game_state_t::ask_starting_money: state = "ask starting money"; break;
+    case game_state_t::ask_bet:            state = "ask bet"; break;
+    case game_state_t::dealing_cards:      state = "dealing cards"; break;
+    case game_state_t::tie:                state = "tie"; break;
+    case game_state_t::player_natural:     state = "player natural"; break;
+    case game_state_t::dealer_natural:     state = "dealer natural"; break;
+    case game_state_t::the_play:           state = "the play"; break;
+    default:                               state = "unknown"; break;
   }
+  ImGui::Text("Game state: %s", state.c_str());
+  ImGui::SameLine();
 }
 
 static void gui_draw_scores(const std::vector<int> &scores) {
@@ -75,6 +74,20 @@ static void draw_hand(const deck_t &deck, float x, float y, float xoff) {
   }
 }
 
+static void gui_draw_all_cards_and_stats() {
+  ImGui::Text("Money: %d", money);
+  ImGui::Text("Bet: %d", bet);
+  ImGui::Text("Dealer's hand:");
+  ImGui::SameLine();
+  gui_draw_scores(dealer_scores);
+  draw_hand(dealer_hand, 14, 109, 60);
+  ImGui::Text("\n\n\n\n"); // I know
+  ImGui::Text("Your hand:");
+  ImGui::SameLine();
+  gui_draw_scores(player_scores);
+  draw_hand(player_hand, 14, 109 + 100, 60);
+}
+
 static void game_state_new_game() {
   money = bet = 1000; // TODO temporary for quicker testing
   game_state = game_state_t::ask_starting_money;
@@ -86,6 +99,14 @@ static void game_state_deal_cards() {
   dealer_hand = deal_hand();
   player_scores = count_scores(player_hand);
   dealer_scores = count_scores(dealer_hand);
+  if (scores_have_bj(player_scores) && scores_have_bj(dealer_scores))
+    game_state = game_state_t::tie;
+  if (scores_have_bj(player_scores))
+    game_state = game_state_t::player_natural;
+  else if (scores_have_bj(dealer_scores))
+    game_state = game_state_t::dealer_natural;
+  else
+    game_state = game_state_t::the_play;
 }
 
 static void draw_gui() {
@@ -146,17 +167,23 @@ static void draw_gui() {
           game_state_deal_cards();
       break;
     case game_state_t::dealing_cards:
-      ImGui::Text("Money: %d", money);
-      ImGui::Text("Bet: %d", bet);
-      ImGui::Text("Dealer's hand:");
-      ImGui::SameLine();
-      gui_draw_scores(dealer_scores);
-      draw_hand(dealer_hand, 14, 109, 60);
-      ImGui::Text("\n\n\n\n"); // I know
-      ImGui::Text("Your hand:");
-      ImGui::SameLine();
-      gui_draw_scores(player_scores);
-      draw_hand(player_hand, 14, 109 + 100, 60);
+      gui_draw_all_cards_and_stats();
+      break;
+    case game_state_t::tie:
+      gui_draw_all_cards_and_stats();
+      ImGui::Text("Standoff");
+      break;
+    case game_state_t::player_natural:
+      gui_draw_all_cards_and_stats();
+      ImGui::Text("You win by natural");
+      break;
+    case game_state_t::dealer_natural:
+      gui_draw_all_cards_and_stats();
+      ImGui::Text("Dealer wins by natural");
+      break;
+    case game_state_t::the_play:
+      gui_draw_all_cards_and_stats();
+      break;
     default:
       break;
   }

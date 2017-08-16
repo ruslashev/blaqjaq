@@ -41,5 +41,9 @@ typedef std::vector<card_t> deck_t;
 
 deck_t generate_deck(int packs);
 void shuffle_deck(deck_t *deck);
+
+// blackjack specific
 std::vector<int> count_scores(const deck_t &deck);
+deck_t deal_hand();
+bool scores_have_bj(const std::vector<int> &scores);
 

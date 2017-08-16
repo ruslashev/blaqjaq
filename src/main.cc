@@ -18,29 +18,57 @@ enum class game_state_t {
   , ask_starting_money
   , ask_bet
   , dealing_cards
-  , tie // push or standoff
+  , tie
   , player_natural
   , dealer_natural
   , the_play
+  , dealer_plays
+  , player_bust
+  , player_won
+  , dealer_won
 };
 static game_state_t game_state = game_state_t::no_game;
 static int money = 1000, bet = 0;
-static deck_t player_hand, dealer_hand;
-static std::vector<int> player_scores, dealer_scores;
+static deck_t player_hand, dealer_hand, dealer_shown_hand;
+static std::vector<int> player_scores, dealer_scores, dealer_first_card_scores;
 
 static void load() {
-  glClearColor(39 / 255.f, 119 / 255.f, 20 / 255.f, 1.f); // casino green
-  // glClearColor(187 / 255.f, 206 / 255.f, 242 / 255.f, 1.f);
-  c = new card_drawer(11.f, 15, 0.62f, 3.3f);
   srand(time(nullptr));
+  glClearColor(39 / 255.f, 119 / 255.f, 20 / 255.f, 1.f); // casino green
+  c = new card_drawer(11.f, 15, 0.62f, 3.3f);
+
+  ImGuiStyle& style = ImGui::GetStyle();
+  // set bg alpha to 0 because I can't figure out how to draw cards on top of ui
+  style.Colors[ImGuiCol_WindowBg].w = 0;
+}
+
+static void game_state_new_game() {
+  money = bet = 1000; // TODO temporary for quicker testing
+  game_state = game_state_t::ask_starting_money;
+}
+
+static void game_state_deal_cards() {
+  game_state = game_state_t::dealing_cards;
+
+  player_hand = deal_hand();
+  player_scores = count_scores(player_hand);
+
+  dealer_hand = deal_hand();
+  dealer_scores = count_scores(dealer_hand);
+  deck_t dealer_hand_first_card = { dealer_hand[0] };
+  dealer_first_card_scores = count_scores(dealer_hand_first_card);
+
+  if (scores_have_bj(player_scores) && scores_have_bj(dealer_scores))
+    game_state = game_state_t::tie;
+  if (scores_have_bj(player_scores))
+    game_state = game_state_t::player_natural;
+  else if (scores_have_bj(dealer_scores))
+    game_state = game_state_t::dealer_natural;
+  else
+    game_state = game_state_t::the_play;
 }
 
 static void gui_display_current_state() {
-  ImGuiStyle& style = ImGui::GetStyle();
-  // set bg alpha to 0 because I can't draw cards on top of ui
-  style.Colors[ImGuiCol_WindowBg].w = 0;
-  // style.Colors[ImGuiCol_Text] = ImVec4(0.07f, 0.07f, 0.07f, 1.f);
-
   std::string state;
   switch (game_state) {
     case game_state_t::no_game:            state = "no game"; break;
@@ -51,6 +79,10 @@ static void gui_display_current_state() {
     case game_state_t::player_natural:     state = "player natural"; break;
     case game_state_t::dealer_natural:     state = "dealer natural"; break;
     case game_state_t::the_play:           state = "the play"; break;
+    case game_state_t::dealer_plays:       state = "dealer plays"; break;
+    case game_state_t::player_bust:        state = "player bust"; break;
+    case game_state_t::player_won:         state = "player won"; break;
+    case game_state_t::dealer_won:         state = "dealer won"; break;
     default:                               state = "unknown"; break;
   }
   ImGui::Text("Game state: %s", state.c_str());
@@ -77,36 +109,19 @@ static void draw_hand(const deck_t &deck, float x, float y, float xoff) {
 static void gui_draw_all_cards_and_stats() {
   ImGui::Text("Money: %d", money);
   ImGui::Text("Bet: %d", bet);
+
   ImGui::Text("Dealer's hand:");
   ImGui::SameLine();
-  gui_draw_scores(dealer_scores);
-  draw_hand(dealer_hand, 14, 109, 60);
+  gui_draw_scores(dealer_first_card_scores);
+  float x_draw = 14, y = 109, xoff = 60;
+  c->draw(dealer_hand[0], x_draw, y, projection_mat);
+  c->draw_down(x_draw + xoff, y, projection_mat);
+
   ImGui::Text("\n\n\n\n"); // I know
   ImGui::Text("Your hand:");
   ImGui::SameLine();
   gui_draw_scores(player_scores);
   draw_hand(player_hand, 14, 109 + 100, 60);
-}
-
-static void game_state_new_game() {
-  money = bet = 1000; // TODO temporary for quicker testing
-  game_state = game_state_t::ask_starting_money;
-}
-
-static void game_state_deal_cards() {
-  game_state = game_state_t::dealing_cards;
-  player_hand = deal_hand();
-  dealer_hand = deal_hand();
-  player_scores = count_scores(player_hand);
-  dealer_scores = count_scores(dealer_hand);
-  if (scores_have_bj(player_scores) && scores_have_bj(dealer_scores))
-    game_state = game_state_t::tie;
-  if (scores_have_bj(player_scores))
-    game_state = game_state_t::player_natural;
-  else if (scores_have_bj(dealer_scores))
-    game_state = game_state_t::dealer_natural;
-  else
-    game_state = game_state_t::the_play;
 }
 
 static void draw_gui() {
@@ -183,6 +198,10 @@ static void draw_gui() {
       break;
     case game_state_t::the_play:
       gui_draw_all_cards_and_stats();
+      ImGui::Text("\n\n\n\n");
+      ImGui::Button("Hit");
+      ImGui::SameLine();
+      ImGui::Button("Stay");
       break;
     default:
       break;

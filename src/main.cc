@@ -31,6 +31,7 @@ static game_state_t game_state = game_state_t::no_game;
 static int money = 1000, bet = 0;
 static deck_t player_hand, dealer_hand, dealer_shown_hand;
 static std::vector<int> player_scores, dealer_scores, dealer_first_card_scores;
+static bool draw_all_dealer_cards = false;
 
 static void load() {
   srand(time(nullptr));
@@ -48,6 +49,8 @@ static void game_state_new_game() {
 }
 
 static void game_state_deal_cards() {
+  draw_all_dealer_cards = false;
+
   game_state = game_state_t::dealing_cards;
 
   player_hand = deal_hand();
@@ -68,9 +71,17 @@ static void game_state_deal_cards() {
     game_state = game_state_t::the_play;
 }
 
+static void game_dealer_plays() {
+  game_state = game_state_t::dealer_plays;
+}
+
 static void game_hit() {
   player_hand.push_back(random_card());
-  // if (player_scores[0] > 21)
+  player_scores = count_scores(player_hand);
+  if (scores_have_bj(player_scores))
+    game_dealer_plays();
+  if (player_scores[0] > 21)
+    game_state = game_state_t::player_bust;
 }
 
 static void gui_display_current_state() {
@@ -95,12 +106,13 @@ static void gui_display_current_state() {
 }
 
 static void gui_draw_scores(const std::vector<int> &scores) {
+  std::string score_str = "";
   for (size_t i = 0; i < scores.size(); ++i)
-    if (i != scores.size() - 1) {
-      ImGui::Text("%d or", scores[i]);
-      ImGui::SameLine();
-    } else
-      ImGui::Text("%d", scores[i]);
+    if (i != scores.size() - 1)
+      score_str += std::to_string(scores[i]) + " or ";
+    else
+      score_str += std::to_string(scores[i]);
+  ImGui::Text("%s", score_str.c_str());
 }
 
 static void draw_hand(const deck_t &deck, float x, float y, float xoff) {
@@ -111,22 +123,28 @@ static void draw_hand(const deck_t &deck, float x, float y, float xoff) {
   }
 }
 
-static void gui_draw_all_cards_and_stats() {
+static void gui_draw_cards_and_stats() {
   ImGui::Text("Money: %d", money);
   ImGui::Text("Bet: %d", bet);
 
   ImGui::Text("Dealer's hand:");
   ImGui::SameLine();
   gui_draw_scores(dealer_first_card_scores);
-  float x_draw = 14, y = 109, xoff = 60;
-  c->draw(dealer_hand[0], x_draw, y, projection_mat);
-  c->draw_down(x_draw + xoff, y, projection_mat);
+  float x = 14, y = 109, xoff = 60;
+  if (draw_all_dealer_cards)
+    draw_hand(player_hand, x, y, xoff);
+  else {
+    float x_draw = x;
+    c->draw(dealer_hand[0], x_draw, y, projection_mat);
+    c->draw_down(x_draw + xoff, y, projection_mat);
+  }
 
   ImGui::Text("\n\n\n\n"); // I know
   ImGui::Text("Your hand:");
   ImGui::SameLine();
   gui_draw_scores(player_scores);
   draw_hand(player_hand, 14, 109 + 100, 60);
+  ImGui::Text("\n\n\n\n");
 }
 
 static void draw_gui() {
@@ -183,31 +201,42 @@ static void draw_gui() {
       ImGui::PopItemWidth();
       ImGui::SameLine();
       if (ImGui::Button("OK", ImVec2(100, 0)))
-        if (bet > 0 && bet <= money)
+        if (bet > 0 && bet <= money) {
+          money -= bet;
           game_state_deal_cards();
+        }
       break;
     case game_state_t::dealing_cards:
-      gui_draw_all_cards_and_stats();
+      gui_draw_cards_and_stats();
       break;
     case game_state_t::tie:
-      gui_draw_all_cards_and_stats();
+      gui_draw_cards_and_stats();
       ImGui::Text("Standoff");
       break;
     case game_state_t::player_natural:
-      gui_draw_all_cards_and_stats();
+      gui_draw_cards_and_stats();
       ImGui::Text("You win by natural");
       break;
     case game_state_t::dealer_natural:
-      gui_draw_all_cards_and_stats();
+      gui_draw_cards_and_stats();
+      draw_all_dealer_cards = true;
       ImGui::Text("Dealer wins by natural");
       break;
     case game_state_t::the_play:
-      gui_draw_all_cards_and_stats();
-      ImGui::Text("\n\n\n\n");
+      gui_draw_cards_and_stats();
       if (ImGui::Button("Hit"))
         game_hit();
       ImGui::SameLine();
-      ImGui::Button("Stay");
+      if (ImGui::Button("Stay"))
+        game_dealer_plays();
+      break;
+    case game_state_t::dealer_plays:
+      gui_draw_cards_and_stats();
+      ImGui::Text("dealer playing");
+      break;
+    case game_state_t::player_bust:
+      gui_draw_cards_and_stats();
+      ImGui::Text("haha busted u bitch");
       break;
     default:
       break;

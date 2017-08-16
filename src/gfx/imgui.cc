@@ -21,18 +21,13 @@ static void imgui_render_draw_lists(ImDrawData* draw_data) {
   draw_data->ScaleClipRects(io.DisplayFramebufferScale);
 
   // Backup GL state
-  GLint last_active_texture, last_program, last_texture, last_array_buffer
-    , last_element_array_buffer, last_vertex_array, last_blend_src_rgb
+  GLint last_active_texture, last_program, last_texture, last_blend_src_rgb
     , last_blend_dst_rgb, last_blend_src_alpha, last_blend_dst_alpha
     , last_blend_equation_rgb, last_blend_equation_alpha, last_viewport[4]
     , last_scissor_box[4];
   glGetIntegerv(GL_ACTIVE_TEXTURE, &last_active_texture);
-  glActiveTexture(GL_TEXTURE0);
   glGetIntegerv(GL_CURRENT_PROGRAM, &last_program);
   glGetIntegerv(GL_TEXTURE_BINDING_2D, &last_texture);
-  glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &last_array_buffer);
-  glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &last_element_array_buffer);
-  glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &last_vertex_array);
   glGetIntegerv(GL_BLEND_SRC_RGB, &last_blend_src_rgb);
   glGetIntegerv(GL_BLEND_DST_RGB, &last_blend_dst_rgb);
   glGetIntegerv(GL_BLEND_SRC_ALPHA, &last_blend_src_alpha);
@@ -46,6 +41,7 @@ static void imgui_render_draw_lists(ImDrawData* draw_data) {
     , last_enable_depth_test = glIsEnabled(GL_DEPTH_TEST)
     , last_enable_scissor_test = glIsEnabled(GL_SCISSOR_TEST);
 
+  glActiveTexture(GL_TEXTURE0);
   glEnable(GL_BLEND);
   glBlendEquation(GL_FUNC_ADD);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -98,9 +94,6 @@ static void imgui_render_draw_lists(ImDrawData* draw_data) {
   glUseProgram(last_program);
   glBindTexture(GL_TEXTURE_2D, last_texture);
   glActiveTexture(last_active_texture);
-  glBindVertexArray(last_vertex_array);
-  glBindBuffer(GL_ARRAY_BUFFER, last_array_buffer);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, last_element_array_buffer);
   glBlendEquationSeparate(last_blend_equation_rgb, last_blend_equation_alpha);
   glBlendFuncSeparate(last_blend_src_rgb, last_blend_dst_rgb
       , last_blend_src_alpha, last_blend_dst_alpha);

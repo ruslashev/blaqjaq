@@ -13,8 +13,14 @@ static bool show_test_window = false;
 static glm::mat4 projection_mat;
 static card_drawer *c;
 
+enum class game_state_t {
+    no_game
+  , ask_starting_money
+  , ask_bet
+};
+static game_state_t game_state = game_state_t::no_game;
+
 static deck_t deck;
-static bool match_in_progress = false;
 static int money = 1000, bet = 0;
 
 static void load() {
@@ -25,19 +31,27 @@ static void load() {
   c = new card_drawer(20.f, 15, 0.62f, 3.3f);
 }
 
-static void key_event(char key, bool down) {
-}
-static void mouse_motion_event(float xrel, float yrel, int x, int y) {
-}
-static void mouse_button_event(int button, bool down, int x, int y) {
-}
-static void update(double dt, double t) {
+static void gui_display_current_state() {
+  ImGui::Text("Game state:");
+  ImGui::SameLine();
+  switch (game_state) {
+    case game_state_t::no_game:
+      ImGui::Text("no game");
+      break;
+    case game_state_t::ask_starting_money:
+      ImGui::Text("ask starting money");
+      break;
+    case game_state_t::ask_bet:
+      ImGui::Text("ask bet");
+      break;
+    default:
+      break;
+  }
 }
 
 static void new_game() {
   money = bet = 0;
-  ImGui::OpenPopup("Enter starting balance");
-  match_in_progress = true;
+  game_state = game_state_t::ask_starting_money;
 }
 
 static void gui_ask_starting_balance_popup() {
@@ -45,7 +59,10 @@ static void gui_ask_starting_balance_popup() {
         , ImGuiWindowFlags_AlwaysAutoResize)) {
     ImGui::InputInt("", &money);
     if (ImGui::Button("OK", ImVec2(100, 0)))
-      ImGui::CloseCurrentPopup();
+      if (money > 0) {
+        game_state = game_state_t::ask_bet;
+        ImGui::CloseCurrentPopup();
+      }
     ImGui::EndPopup();
   }
 }
@@ -55,15 +72,9 @@ static void draw_gui() {
     if (ImGui::SmallButton("New game"))
       new_game();
 
-    gui_ask_starting_balance_popup();
-
     ImGui::SameLine();
     if (ImGui::SmallButton("Show test window"))
       show_test_window = !show_test_window;
-
-    ImGui::SameLine();
-    if (match_in_progress)
-      ImGui::Text("money: %d", money);
 
     ImGui::EndMainMenuBar();
   }
@@ -81,8 +92,22 @@ static void draw_gui() {
       | ImGuiWindowFlags_NoResize
       | ImGuiWindowFlags_NoMove
       | ImGuiWindowFlags_NoCollapse);
-  if (!match_in_progress)
-    ImGui::Text("No match being played right now");
+
+  gui_display_current_state();
+
+  switch (game_state) {
+    case game_state_t::no_game:
+      ImGui::Text("No match being played right now");
+      break;
+    case game_state_t::ask_starting_money:
+      gui_ask_starting_balance_popup();
+      ImGui::OpenPopup("Enter starting balance");
+      break;
+    case game_state_t::ask_bet:
+      ImGui::Text("Money: %d", money);
+    default:
+      break;
+  }
 
   ImGui::End();
 }
@@ -98,6 +123,15 @@ static void frame() {
 
 static void cleanup() {
   delete c;
+}
+
+static void key_event(char key, bool down) {
+}
+static void mouse_motion_event(float xrel, float yrel, int x, int y) {
+}
+static void mouse_button_event(int button, bool down, int x, int y) {
+}
+static void update(double dt, double t) {
 }
 
 int main() {

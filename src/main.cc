@@ -22,8 +22,9 @@ enum class game_state_t {
   , player_natural
   , dealer_natural
   , the_play
-  , dealer_plays
   , player_bust
+  , dealer_plays
+  , dealer_bust
   , player_won
   , dealer_won
 };
@@ -71,8 +72,38 @@ static void game_state_deal_cards() {
     game_state = game_state_t::the_play;
 }
 
+static void game_dealer_playing_logic() {
+  // dealer hits on soft 17
+  // note this accounts for hands with ace
+  if (dealer_scores[0] < 17) {
+    dealer_hand.push_back(random_card());
+    dealer_scores = count_scores(dealer_hand);
+    game_dealer_playing_logic();
+  }
+}
+
+/// score closest but not exceeding 21
+static int best_score(const std::vector<int> &scores) {
+  int prev_score = scores[0];
+  for (int score : scores)
+    if (score > 21)
+      return prev_score;
+    else
+      prev_score = score;
+  return prev_score;
+}
+
 static void game_dealer_plays() {
   game_state = game_state_t::dealer_plays;
+  game_dealer_playing_logic();
+  if (dealer_scores[0] > 21)
+    game_state = game_state_t::dealer_bust;
+  else if (best_score(dealer_scores) == best_score(player_scores))
+    game_state = game_state_t::tie;
+  else if (best_score(dealer_scores) > best_score(player_scores))
+    game_state = game_state_t::dealer_won;
+  else if (best_score(dealer_scores) < best_score(player_scores))
+    game_state = game_state_t::player_won;
 }
 
 static void game_hit() {
@@ -95,8 +126,9 @@ static void gui_display_current_state() {
     case game_state_t::player_natural:     state = "player natural"; break;
     case game_state_t::dealer_natural:     state = "dealer natural"; break;
     case game_state_t::the_play:           state = "the play"; break;
-    case game_state_t::dealer_plays:       state = "dealer plays"; break;
     case game_state_t::player_bust:        state = "player bust"; break;
+    case game_state_t::dealer_plays:       state = "dealer plays"; break;
+    case game_state_t::dealer_bust:        state = "dealer bust"; break;
     case game_state_t::player_won:         state = "player won"; break;
     case game_state_t::dealer_won:         state = "dealer won"; break;
     default:                               state = "unknown"; break;
@@ -128,12 +160,14 @@ static void gui_draw_cards_and_stats() {
   ImGui::Text("Bet: %d", bet);
 
   ImGui::Text("Dealer's hand:");
-  ImGui::SameLine();
-  gui_draw_scores(dealer_first_card_scores);
   float x = 14, y = 109, xoff = 60;
-  if (draw_all_dealer_cards)
-    draw_hand(player_hand, x, y, xoff);
-  else {
+  if (draw_all_dealer_cards) {
+    ImGui::SameLine();
+    gui_draw_scores(dealer_scores);
+    draw_hand(dealer_hand, x, y, xoff);
+  } else {
+    ImGui::SameLine();
+    gui_draw_scores(dealer_first_card_scores);
     float x_draw = x;
     c->draw(dealer_hand[0], x_draw, y, projection_mat);
     c->draw_down(x_draw + xoff, y, projection_mat);
@@ -230,13 +264,29 @@ static void draw_gui() {
       if (ImGui::Button("Stay"))
         game_dealer_plays();
       break;
-    case game_state_t::dealer_plays:
-      gui_draw_cards_and_stats();
-      ImGui::Text("dealer playing");
-      break;
     case game_state_t::player_bust:
       gui_draw_cards_and_stats();
       ImGui::Text("haha busted u bitch");
+      break;
+    case game_state_t::dealer_plays:
+      draw_all_dealer_cards = true;
+      gui_draw_cards_and_stats();
+      ImGui::Text("dealer playing");
+      break;
+    case game_state_t::dealer_bust:
+      draw_all_dealer_cards = true;
+      gui_draw_cards_and_stats();
+      ImGui::Text("dealer bust");
+      break;
+    case game_state_t::player_won:
+      draw_all_dealer_cards = true;
+      gui_draw_cards_and_stats();
+      ImGui::Text("player won");
+      break;
+    case game_state_t::dealer_won:
+      draw_all_dealer_cards = true;
+      gui_draw_cards_and_stats();
+      ImGui::Text("dealer won");
       break;
     default:
       break;

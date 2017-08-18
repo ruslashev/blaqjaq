@@ -9,7 +9,8 @@
 #include "imgui/imgui.h"
 #include <memory>
 
-static bool show_test_window = false;
+static bool debug = false, show_test_window = false;
+
 static glm::mat4 projection_mat;
 static card_drawer *c;
 
@@ -34,14 +35,24 @@ static deck_t player_hand, dealer_hand, dealer_shown_hand;
 static std::vector<int> player_scores, dealer_scores, dealer_first_card_scores;
 static bool draw_all_dealer_cards = false;
 
+/// shorthand
+static ImVec4 r2v(int r, int g, int b) {
+  return ImVec4((float)r / 255.f, (float)g / 255.f, (float)b / 255.f, 1.f);
+}
+
 static void load() {
   srand(time(nullptr));
-  glClearColor(39 / 255.f, 119 / 255.f, 20 / 255.f, 1.f); // casino green
+  glClearColor(39.f / 255.f, 119.f / 255.f, 20.f / 255.f, 1.f); // casino green
   c = new card_drawer(11.f, 15, 0.62f, 3.3f);
 
   ImGuiStyle& style = ImGui::GetStyle();
   // set bg alpha to 0 because I can't figure out how to draw cards on top of ui
   style.Colors[ImGuiCol_WindowBg].w = 0;
+  style.Colors[ImGuiCol_MenuBarBg]     = r2v( 30,  71,  20);
+  style.Colors[ImGuiCol_Button]        = r2v( 87, 124, 160);
+  style.Colors[ImGuiCol_ButtonHovered] = r2v( 95, 137, 175);
+  style.Colors[ImGuiCol_ButtonActive]  = r2v(103, 148, 190);
+  style.FramePadding.y = 2;
 }
 
 /// score closest but not exceeding 21
@@ -201,19 +212,26 @@ static void gui_draw_cards_and_stats() {
 
 static void draw_gui() {
   if (ImGui::BeginMainMenuBar()) {
-    if (ImGui::SmallButton("New game"))
+
+    ImGui::PushStyleColor(ImGuiCol_Button,        r2v( 67,  96, 123));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, r2v( 75, 108, 138));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive,  r2v( 83, 119, 153));
+
+    if (ImGui::Button("New game"))
       game_state_new_game();
+    if (debug) {
+      ImGui::SameLine();
+      if (ImGui::Button("Show test window"))
+        show_test_window = !show_test_window;
+      ImGui::SameLine();
+      gui_display_current_state();
+    }
 
-    ImGui::SameLine();
-    if (ImGui::SmallButton("Show test window"))
-      show_test_window = !show_test_window;
-
-    ImGui::SameLine();
-    gui_display_current_state();
+    ImGui::PopStyleColor(3);
 
     ImGui::EndMainMenuBar();
   }
-  if (show_test_window) {
+  if (debug && show_test_window) {
     ImGui::SetNextWindowPos(ImVec2(20, 20), ImGuiSetCond_FirstUseEver);
     ImGui::ShowTestWindow(&show_test_window);
   }
@@ -229,6 +247,8 @@ static void draw_gui() {
       | ImGuiWindowFlags_ShowBorders
       | ImGuiWindowFlags_NoCollapse);
 
+  int input_step = 100, input_fast = 1000;
+
   switch (game_state) {
     case game_state_t::no_game:
       ImGui::Text("No match being played right now");
@@ -237,7 +257,7 @@ static void draw_gui() {
       ImGui::Text("Money:");
       ImGui::SameLine();
       ImGui::PushItemWidth(200);
-      ImGui::InputInt("", &money);
+      ImGui::InputInt("", &money, input_step, input_fast);
       ImGui::PopItemWidth();
       ImGui::SameLine();
       if (ImGui::Button("OK", ImVec2(100, 0)))
@@ -249,7 +269,7 @@ static void draw_gui() {
       ImGui::Text("Bet:");
       ImGui::SameLine();
       ImGui::PushItemWidth(200);
-      ImGui::InputInt("", &bet);
+      ImGui::InputInt("", &bet, input_step, input_fast);
       ImGui::PopItemWidth();
       ImGui::SameLine();
       if (ImGui::Button("OK", ImVec2(100, 0)))

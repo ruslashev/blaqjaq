@@ -17,7 +17,8 @@ void driver_init(const char *title, int width, int height) {
   SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 16);
   window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED
       , SDL_WINDOWPOS_CENTERED, width, height
-      , SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+      , SDL_WINDOW_OPENGL);
+      // , SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
   glcontext = SDL_GL_CreateContext(window);
   pre_lock_mouse_x = width / 2;
   pre_lock_mouse_y = height / 2;

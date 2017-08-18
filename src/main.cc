@@ -44,6 +44,17 @@ static void load() {
   style.Colors[ImGuiCol_WindowBg].w = 0;
 }
 
+/// score closest but not exceeding 21
+static int best_score(const std::vector<int> &scores) {
+  int prev_score = scores[0];
+  for (int score : scores)
+    if (score > 21)
+      return prev_score;
+    else
+      prev_score = score;
+  return prev_score;
+}
+
 static void game_state_new_game() {
   money = bet = 1000; // TODO temporary for quicker testing
   game_state = game_state_t::ask_starting_money;
@@ -62,11 +73,13 @@ static void game_state_deal_cards() {
   deck_t dealer_hand_first_card = { dealer_hand[0] };
   dealer_first_card_scores = count_scores(dealer_hand_first_card);
 
-  if (scores_have_bj(player_scores) && scores_have_bj(dealer_scores))
+  if (scores_have_bj(player_scores) && scores_have_bj(dealer_scores)) {
+    money += bet;
     game_state = game_state_t::tie;
-  if (scores_have_bj(player_scores))
+  } if (scores_have_bj(player_scores)) {
+    money += std::round((double)bet * 2.5);
     game_state = game_state_t::player_natural;
-  else if (scores_have_bj(dealer_scores))
+  } else if (scores_have_bj(dealer_scores))
     game_state = game_state_t::dealer_natural;
   else
     game_state = game_state_t::the_play;
@@ -82,28 +95,21 @@ static void game_dealer_playing_logic() {
   }
 }
 
-/// score closest but not exceeding 21
-static int best_score(const std::vector<int> &scores) {
-  int prev_score = scores[0];
-  for (int score : scores)
-    if (score > 21)
-      return prev_score;
-    else
-      prev_score = score;
-  return prev_score;
-}
-
 static void game_dealer_plays() {
   game_state = game_state_t::dealer_plays;
   game_dealer_playing_logic();
-  if (dealer_scores[0] > 21)
+  if (dealer_scores[0] > 21) {
+    money += bet * 2;
     game_state = game_state_t::dealer_bust;
-  else if (best_score(dealer_scores) == best_score(player_scores))
+  } else if (best_score(dealer_scores) == best_score(player_scores)) {
+    money += bet;
     game_state = game_state_t::tie;
-  else if (best_score(dealer_scores) > best_score(player_scores))
+  } else if (best_score(dealer_scores) > best_score(player_scores))
     game_state = game_state_t::dealer_won;
-  else if (best_score(dealer_scores) < best_score(player_scores))
+  else if (best_score(dealer_scores) < best_score(player_scores)) {
+    money += bet * 2;
     game_state = game_state_t::player_won;
+  }
 }
 
 static void game_hit() {
@@ -113,6 +119,16 @@ static void game_hit() {
     game_dealer_plays();
   if (player_scores[0] > 21)
     game_state = game_state_t::player_bust;
+}
+
+static void game_continue() {
+  if (money == 0) {
+    ImGui::Text("\n");
+    ImGui::Text("u lost it all even in virtual blackjack.");
+    ImGui::Text("protip: seek help on ur addiction");
+  } else
+    if (ImGui::Button("OK"))
+      game_state = game_state_t::ask_bet;
 }
 
 static void gui_display_current_state() {
@@ -140,10 +156,12 @@ static void gui_display_current_state() {
 static void gui_draw_scores(const std::vector<int> &scores) {
   std::string score_str = "";
   for (size_t i = 0; i < scores.size(); ++i)
-    if (i != scores.size() - 1)
-      score_str += std::to_string(scores[i]) + " or ";
+    if (i == 0)
+      score_str = std::to_string(scores[i]);
+    else if (i != scores.size() - 1)
+      score_str += ", " + std::to_string(scores[i]);
     else
-      score_str += std::to_string(scores[i]);
+      score_str += " or " + std::to_string(scores[i]);
   ImGui::Text("%s", score_str.c_str());
 }
 
@@ -240,21 +258,25 @@ static void draw_gui() {
           game_state_deal_cards();
         }
       break;
-    case game_state_t::dealing_cards:
+    case game_state_t::dealing_cards: // TODO this needs to be removed
       gui_draw_cards_and_stats();
       break;
     case game_state_t::tie:
+      draw_all_dealer_cards = true;
       gui_draw_cards_and_stats();
       ImGui::Text("Standoff");
+      game_continue();
       break;
     case game_state_t::player_natural:
       gui_draw_cards_and_stats();
       ImGui::Text("You win by natural");
+      game_continue();
       break;
     case game_state_t::dealer_natural:
-      gui_draw_cards_and_stats();
       draw_all_dealer_cards = true;
+      gui_draw_cards_and_stats();
       ImGui::Text("Dealer wins by natural");
+      game_continue();
       break;
     case game_state_t::the_play:
       gui_draw_cards_and_stats();
@@ -267,8 +289,9 @@ static void draw_gui() {
     case game_state_t::player_bust:
       gui_draw_cards_and_stats();
       ImGui::Text("haha busted u bitch");
+      game_continue();
       break;
-    case game_state_t::dealer_plays:
+    case game_state_t::dealer_plays: // TODO this need to be removed too
       draw_all_dealer_cards = true;
       gui_draw_cards_and_stats();
       ImGui::Text("dealer playing");
@@ -277,16 +300,19 @@ static void draw_gui() {
       draw_all_dealer_cards = true;
       gui_draw_cards_and_stats();
       ImGui::Text("dealer bust");
+      game_continue();
       break;
     case game_state_t::player_won:
       draw_all_dealer_cards = true;
       gui_draw_cards_and_stats();
       ImGui::Text("player won");
+      game_continue();
       break;
     case game_state_t::dealer_won:
       draw_all_dealer_cards = true;
       gui_draw_cards_and_stats();
       ImGui::Text("dealer won");
+      game_continue();
       break;
     default:
       break;
@@ -318,7 +344,7 @@ static void update(double dt, double t) {
 }
 
 int main() {
-  driver_init("blaqjaq", 700, 525);
+  driver_init("blaqjaq pays 3 to 2", 700, 525);
 
   load();
 

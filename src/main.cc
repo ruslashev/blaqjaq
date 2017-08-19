@@ -135,6 +135,7 @@ static void game_hit() {
 static void game_continue() {
   if (money == 0) {
     ImGui::Text("\n");
+    ImGui::Text("Game over.");
     ImGui::Text("u lost it all even in virtual blackjack.");
     ImGui::Text("protip: seek help on ur addiction");
   } else
@@ -251,7 +252,7 @@ static void draw_gui() {
 
   switch (game_state) {
     case game_state_t::no_game:
-      ImGui::Text("No match being played right now");
+      ImGui::Text("No game being played right now");
       break;
     case game_state_t::ask_starting_money:
       ImGui::Text("Money:");
@@ -271,6 +272,9 @@ static void draw_gui() {
       ImGui::PushItemWidth(200);
       ImGui::InputInt("", &bet, input_step, input_fast);
       ImGui::PopItemWidth();
+      ImGui::SameLine();
+      if (ImGui::Button("Max"))
+        bet = money;
       ImGui::SameLine();
       if (ImGui::Button("OK", ImVec2(100, 0)))
         if (bet > 0 && bet <= money) {
